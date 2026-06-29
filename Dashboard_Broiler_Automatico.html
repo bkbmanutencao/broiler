@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Broiler Automático — Consolidado BKB</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f5f5;
+    --surface: #ffffff;
+    --surface2: #f9f9f9;
+    --border: #e5e5e5;
+    --text: #111111;
+    --muted: #888;
+    --sim: #16a34a;
+    --sim-bg: rgba(22,163,74,0.10);
+    --nao: #dc2626;
+    --nao-bg: rgba(220,38,38,0.10);
+    --accent: #d97706;
+    --accent-dim: rgba(217,119,6,0.12);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .logo-flame {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .header-title h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+  .header-title p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .badge-total {
+    background: var(--accent-dim);
+    border: 1px solid rgba(245,158,11,0.3);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 20px;
+  }
+
+  /* MAIN */
+  main { max-width: 1200px; margin: 0 auto; padding: 28px 24px; }
+
+  /* KPI CARDS */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  @media (max-width: 800px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .kpi-grid { grid-template-columns: 1fr; } }
+
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .kpi-card.total::before { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+  .kpi-card.sim::before { background: var(--sim); }
+  .kpi-card.nao::before { background: var(--nao); }
+  .kpi-card.pct::before { background: linear-gradient(90deg, #ef4444, #f59e0b); }
+
+  .kpi-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 10px; }
+  .kpi-value { font-size: 36px; font-weight: 800; letter-spacing: -1px; line-height: 1; }
+  .kpi-card.sim .kpi-value { color: var(--sim); }
+  .kpi-card.nao .kpi-value { color: var(--nao); }
+  .kpi-card.pct .kpi-value { color: var(--accent); }
+  .kpi-sub { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+  /* SECTION HEADER */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .section-title {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::before {
+    content: '';
+    width: 3px; height: 14px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  /* FILTER BAR */
+  .filter-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .filter-btn {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+  /* REGIONAL CARDS */
+  .reg-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 14px;
+    margin-bottom: 32px;
+  }
+  .reg-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color .15s, transform .15s;
+  }
+  .reg-card:hover { border-color: #444; transform: translateY(-1px); }
+  .reg-card.expanded { border-color: var(--accent); }
+
+  .reg-header {
+    padding: 16px 18px 14px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .reg-name { font-size: 14px; font-weight: 700; letter-spacing: -0.2px; }
+  .reg-meta { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .reg-pct-badge {
+    font-size: 18px;
+    font-weight: 800;
+    flex-shrink: 0;
+    padding: 4px 10px;
+    border-radius: 8px;
+  }
+  .badge-good { background: var(--sim-bg); color: var(--sim); }
+  .badge-warn { background: rgba(245,158,11,0.12); color: var(--accent); }
+  .badge-bad { background: var(--nao-bg); color: var(--nao); }
+
+  .reg-bar-wrap {
+    padding: 0 18px 14px;
+  }
+  .reg-bar-track {
+    height: 8px;
+    background: var(--nao-bg);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .reg-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: var(--sim);
+    transition: width .4s ease;
+  }
+  .reg-bar-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+  }
+  .lbl-sim { color: var(--sim); font-weight: 600; }
+  .lbl-nao { color: var(--nao); font-weight: 600; }
+
+  /* DETAIL PANEL */
+  .reg-detail {
+    border-top: 1px solid var(--border);
+    background: var(--surface2);
+    display: none;
+  }
+  .reg-card.expanded .reg-detail { display: block; }
+  .detail-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+  }
+  .detail-tab {
+    flex: 1;
+    padding: 10px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--muted);
+    border: none;
+    background: transparent;
+    font-family: 'Inter', sans-serif;
+    transition: color .15s;
+  }
+  .detail-tab.active-sim { color: var(--sim); border-bottom: 2px solid var(--sim); margin-bottom: -1px; }
+  .detail-tab.active-nao { color: var(--nao); border-bottom: 2px solid var(--nao); margin-bottom: -1px; }
+  .detail-tab:hover:not(.active-sim):not(.active-nao) { color: var(--text); }
+
+  .detail-list {
+    max-height: 240px;
+    overflow-y: auto;
+    padding: 10px 0;
+  }
+  .detail-list::-webkit-scrollbar { width: 4px; }
+  .detail-list::-webkit-scrollbar-track { background: transparent; }
+  .detail-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .detail-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 18px;
+    font-size: 12px;
+    border-radius: 0;
+    transition: background .1s;
+  }
+  .detail-item:hover { background: rgba(255,255,255,0.03); }
+  .detail-bkn {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    min-width: 46px;
+  }
+  .detail-nome { flex: 1; color: var(--text); line-height: 1.3; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .dot-sim { background: var(--sim); }
+  .dot-nao { background: var(--nao); }
+
+  /* TABLE VIEW */
+  .table-section { margin-bottom: 32px; }
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead th {
+    background: var(--surface);
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  thead th.right { text-align: right; }
+  tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); }
+  tbody tr:hover { background: rgba(255,255,255,0.02); }
+  tbody td { padding: 9px 14px; }
+  tbody td.right { text-align: right; font-variant-numeric: tabular-nums; }
+  .td-sim { color: var(--sim); font-weight: 700; }
+  .td-nao { color: var(--nao); font-weight: 700; }
+  .td-pct { font-weight: 700; }
+  .td-bar {
+    width: 120px;
+    height: 6px;
+    background: var(--nao-bg);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .td-bar-fill { height: 100%; background: var(--sim); border-radius: 3px; }
+
+  /* SEARCH */
+  .search-wrap { position: relative; }
+  .search-input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px 8px 36px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    width: 240px;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  .search-icon {
+    position: absolute;
+    left: 11px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 14px;
+    pointer-events: none;
+  }
+
+  /* NÃO LIST FULL */
+  .nao-full-section { margin-bottom: 32px; }
+  .nao-full-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 6px;
+  }
+  .nao-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--nao);
+    border-radius: 6px;
+    padding: 9px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .nao-item-nome { font-size: 12px; font-weight: 600; color: var(--text); }
+  .nao-item-meta { font-size: 10px; color: var(--muted); }
+
+  /* TABS NAV */
+  .main-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+  }
+  .main-tab {
+    flex: 1;
+    padding: 8px 12px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Inter', sans-serif;
+    border-radius: 7px;
+    transition: all .15s;
+  }
+  .main-tab.active { background: var(--surface2); color: var(--text); }
+
+  /* VIEWS */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 24px;
+    font-size: 11px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo-flame">🔥</div>
+    <div class="header-title">
+      <h1>Broiler Automático — Consolidado BKB</h1>
+      <p>Pesquisa via Google Forms · Última atualização incluída</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="badge-total" id="badge-total"></div>
+  </div>
+</header>
+
+<main>
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi-card total">
+      <div class="kpi-label">Lojas Respondentes</div>
+      <div class="kpi-value" id="kpi-total"></div>
+      <div class="kpi-sub">Respostas únicas por BKN</div>
+    </div>
+    <div class="kpi-card sim">
+      <div class="kpi-label">Broiler Acendendo ✓</div>
+      <div class="kpi-value" id="kpi-sim"></div>
+      <div class="kpi-sub" id="kpi-sim-sub"></div>
+    </div>
+    <div class="kpi-card nao">
+      <div class="kpi-label">Broiler com Problema ✗</div>
+      <div class="kpi-value" id="kpi-nao"></div>
+      <div class="kpi-sub" id="kpi-nao-sub"></div>
+    </div>
+    <div class="kpi-card pct">
+      <div class="kpi-label">% com Problema</div>
+      <div class="kpi-value" id="kpi-pct"></div>
+      <div class="kpi-sub">das lojas respondentes</div>
+    </div>
+  </div>
+
+  <!-- MAIN TABS -->
+  <div class="main-tabs">
+    <button class="main-tab active" onclick="switchTab('regionais')">🗺 Por Regional</button>
+    <button class="main-tab" onclick="switchTab('tabela')">📊 Tabela Resumo</button>
+    <button class="main-tab" onclick="switchTab('problemas')">⚠️ Lojas com Problema</button>
+  </div>
+
+  <!-- VIEW: REGIONAIS -->
+  <div class="view active" id="view-regionais">
+    <div class="section-header">
+      <div class="section-title">Regionais BKB</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <div class="filter-bar" id="filter-bar" style="margin:0;">
+          <button class="filter-btn active" onclick="setFilter('todos',this)">Todos</button>
+          <button class="filter-btn" onclick="setFilter('problema',this)">⚠ Com Problema</button>
+          <button class="filter-btn" onclick="setFilter('ok',this)">✓ Maioria OK</button>
+        </div>
+      </div>
+    </div>
+    <div class="reg-grid" id="reg-grid"></div>
+  </div>
+
+  <!-- VIEW: TABELA -->
+  <div class="view" id="view-tabela">
+    <div class="section-header">
+      <div class="section-title">Resumo por Regional</div>
+    </div>
+    <div class="table-section">
+      <div class="table-wrap">
+        <table id="resumo-table">
+          <thead>
+            <tr>
+              <th>Regional</th>
+              <th class="right">Respondidas</th>
+              <th class="right">SIM ✓</th>
+              <th class="right">NÃO ✗</th>
+              <th class="right">% SIM</th>
+              <th class="right">% NÃO</th>
+              <th>Barra</th>
+            </tr>
+          </thead>
+          <tbody id="resumo-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW: PROBLEMAS -->
+  <div class="view" id="view-problemas">
+    <div class="section-header">
+      <div class="section-title">Lojas com Problema no Broiler</div>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" type="text" placeholder="Buscar loja ou BKN..." oninput="filterNao(this.value)" id="search-nao">
+      </div>
+    </div>
+    <div class="filter-bar" id="filter-regional-nao"></div>
+    <div class="nao-full-grid" id="nao-full-grid"></div>
+    <div id="nao-count" style="font-size:12px;color:var(--muted);margin-top:12px;"></div>
+  </div>
+</main>
+
+<footer>
+  Dashboard gerado a partir das respostas do Google Forms · BKB · Zamp
+</footer>
+
+<script>
+const DATA = {
+  resumo: [{"REGIONAL":"BK É FOGO LESTE","SIM":23,"NAO":19,"Respondidas":42,"%SIM":54.8,"%NAO":45.2},{"REGIONAL":"BK É FOGO NORTE","SIM":23,"NAO":3,"Respondidas":26,"%SIM":88.5,"%NAO":11.5},{"REGIONAL":"MINAS BAHIA","SIM":21,"NAO":18,"Respondidas":39,"%SIM":53.8,"%NAO":46.2},{"REGIONAL":"NE","SIM":0,"NAO":1,"Respondidas":1,"%SIM":0.0,"%NAO":100.0},{"REGIONAL":"RJ","SIM":11,"NAO":18,"Respondidas":29,"%SIM":37.9,"%NAO":62.1},{"REGIONAL":"SP CENTRO LITORAL","SIM":7,"NAO":21,"Respondidas":28,"%SIM":25.0,"%NAO":75.0},{"REGIONAL":"SP INTERIOR NORTE","SIM":33,"NAO":33,"Respondidas":66,"%SIM":50.0,"%NAO":50.0},{"REGIONAL":"SP SUL","SIM":8,"NAO":46,"Respondidas":54,"%SIM":14.8,"%NAO":85.2},{"REGIONAL":"SUL","SIM":24,"NAO":26,"Respondidas":50,"%SIM":48.0,"%NAO":52.0}],
+  nao_lojas: [{"BKN_int":16169.0,"BKN":16169,"REGIONAL":"SP SUL","Restaurante":"","resposta":"NÃO"},{"BKN_int":20043.0,"BKN":20043,"REGIONAL":"MINAS BAHIA","Restaurante":"CARREFOUR PAMPULHA","resposta":"NÃO"},{"BKN_int":28206.0,"BKN":28206,"REGIONAL":"MINAS BAHIA","Restaurante":"FS BH - AV HERACLITO MOURAO 800","resposta":"NÃO"},{"BKN_int":18457.0,"BKN":18457,"REGIONAL":"MINAS BAHIA","Restaurante":"MONTES CLAROS SHOP","resposta":"NÃO"},{"BKN_int":15511.0,"BKN":15511,"REGIONAL":"MINAS BAHIA","Restaurante":"BH SHOP","resposta":"NÃO"},{"BKN_int":25439.0,"BKN":25439,"REGIONAL":"SP SUL","Restaurante":"FS BOTUCATU - AV SANTANA 761","resposta":"NÃO"},{"BKN_int":25668.0,"BKN":25668,"REGIONAL":"SP SUL","Restaurante":"FS OURINHOS - AV LUIZ SALDANHA RODRIGUES","resposta":"NÃO"},{"BKN_int":19862.0,"BKN":19862,"REGIONAL":"MINAS BAHIA","Restaurante":"EXTRA MINAS SHOP","resposta":"NÃO"},{"BKN_int":24742.0,"BKN":24742,"REGIONAL":"MINAS BAHIA","Restaurante":"FS BH - AV BIAS FORTES","resposta":"NÃO"},{"BKN_int":26162.0,"BKN":26162,"REGIONAL":"SP SUL","Restaurante":"FS AVARE - AV PREF PAULO NOVAES 65","resposta":"NÃO"},{"BKN_int":20215.0,"BKN":20215,"REGIONAL":"SUL","Restaurante":"CARREFOUR PASSO D'AREIA","resposta":"NÃO"},{"BKN_int":21787.0,"BKN":21787,"REGIONAL":"SUL","Restaurante":"CARREFOUR PARTENON","resposta":"NÃO"},{"BKN_int":31872.0,"BKN":31872,"REGIONAL":"MINAS BAHIA","Restaurante":"FC - BOULEVARD VITÓRIA DA CONQUISTA","resposta":"NÃO"},{"BKN_int":19616.0,"BKN":19616,"REGIONAL":"SP SUL","Restaurante":"FS PRES PRUDENTE - WASHINGTON LUIZ 875","resposta":"NÃO"},{"BKN_int":20623.0,"BKN":20623,"REGIONAL":"SP SUL","Restaurante":"SHOP PATIO BOTUCATU","resposta":"NÃO"},{"BKN_int":22513.0,"BKN":22513,"REGIONAL":"SP SUL","Restaurante":"FS BAURU - AV GETULIO VARGAS","resposta":"NÃO"},{"BKN_int":28363.0,"BKN":28363,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"FS BAURU   AV CASTELO BRANCO 194","resposta":"NÃO"},{"BKN_int":19027.0,"BKN":19027,"REGIONAL":"SP SUL","Restaurante":"SHOP NACOES BAURU","resposta":"NÃO"},{"BKN_int":16659.0,"BKN":16659,"REGIONAL":"SP SUL","Restaurante":"MARILIA SHOP","resposta":"NÃO"},{"BKN_int":17782.0,"BKN":17782,"REGIONAL":"SP SUL","Restaurante":"SHOP BAURU","resposta":"NÃO"},{"BKN_int":28351.0,"BKN":28351,"REGIONAL":"SP SUL","Restaurante":"FS BAURU - AV. NACOES UNIDAS 2675","resposta":"NÃO"},{"BKN_int":30085.0,"BKN":30085,"REGIONAL":"SP SUL","Restaurante":"FS INDAIATUBA - AV ENG FABIO ROBERTO BARNABE","resposta":"NÃO"},{"BKN_int":21830.0,"BKN":21830,"REGIONAL":"SP SUL","Restaurante":"FS SOROCABA - AFONSO VERGUEIRO 1460","resposta":"NÃO"},{"BKN_int":22610.0,"BKN":22610,"REGIONAL":"SP SUL","Restaurante":"FS INDAIATUBA - AV PRES VARGAS 1840","resposta":"NÃO"},{"BKN_int":19517.0,"BKN":19517,"REGIONAL":"SP SUL","Restaurante":"SHOP PATIO CIANE","resposta":"NÃO"},{"BKN_int":21532.0,"BKN":21532,"REGIONAL":"SP SUL","Restaurante":"FS SOROCABA - AV PANNUNZIO 176","resposta":"NÃO"},{"BKN_int":18844.0,"BKN":18844,"REGIONAL":"SP SUL","Restaurante":"ITAPETININGA SHOP","resposta":"NÃO"},{"BKN_int":20414.0,"BKN":20414,"REGIONAL":"SP SUL","Restaurante":"FS SOROCABA - AV SAO PAULO 1149","resposta":"NÃO"},{"BKN_int":23721.0,"BKN":23721,"REGIONAL":"SUL","Restaurante":"PARK SHOP CANOAS","resposta":"NÃO"},{"BKN_int":22703.0,"BKN":22703,"REGIONAL":"SUL","Restaurante":"FS CACHOEIRINHA - AV FLORES DA CUNHA","resposta":"NÃO"},{"BKN_int":20621.0,"BKN":20621,"REGIONAL":"SUL","Restaurante":"SHOP PELOTAS","resposta":"NÃO"},{"BKN_int":22702.0,"BKN":22702,"REGIONAL":"MINAS BAHIA","Restaurante":"FS BH - AV CRISTIANO MACHADO 5137","resposta":"NÃO"},{"BKN_int":23990.0,"BKN":23990,"REGIONAL":"MINAS BAHIA","Restaurante":"FS BH - ANDRE CAVALCANTI 211","resposta":"NÃO"},{"BKN_int":19110.0,"BKN":19110,"REGIONAL":"MINAS BAHIA","Restaurante":"SHOP DEL REY","resposta":"NÃO"},{"BKN_int":15745.0,"BKN":15745,"REGIONAL":"MINAS BAHIA","Restaurante":"MINAS SHOP","resposta":"NÃO"},{"BKN_int":28364.0,"BKN":28364,"REGIONAL":"MINAS BAHIA","Restaurante":"FS BH   AV ANTONIO CARLOS 4240","resposta":"NÃO"},{"BKN_int":23729.0,"BKN":23729,"REGIONAL":"MINAS BAHIA","Restaurante":"FS BH - CATALAO","resposta":"NÃO"},{"BKN_int":21087.0,"BKN":21087,"REGIONAL":"MINAS BAHIA","Restaurante":"SHOP BELA VISTA","resposta":"NÃO"},{"BKN_int":19868.0,"BKN":19868,"REGIONAL":"SUL","Restaurante":"SHOP DO VALE","resposta":"NÃO"},{"BKN_int":21586.0,"BKN":21586,"REGIONAL":"SUL","Restaurante":"SHOP ROYAL PLAZA SANTA MARIA","resposta":"NÃO"},{"BKN_int":15893.0,"BKN":15893,"REGIONAL":"SUL","Restaurante":"SHOP IGUATEMI PORTO ALEGRE","resposta":"NÃO"},{"BKN_int":25455.0,"BKN":25455,"REGIONAL":"SUL","Restaurante":"FS POA - AV DR NILO PECANHA 1715","resposta":"NÃO"},{"BKN_int":15903.0,"BKN":15903,"REGIONAL":"SUL","Restaurante":"SHOP CURITIBA","resposta":"NÃO"},{"BKN_int":25477.0,"BKN":25477,"REGIONAL":"SUL","Restaurante":"BKN 25477","resposta":"NÃO"},{"BKN_int":20899.0,"BKN":20899,"REGIONAL":"MINAS BAHIA","Restaurante":"SHOP DA BAHIA","resposta":"NÃO"},{"BKN_int":16116.0,"BKN":16116,"REGIONAL":"MINAS BAHIA","Restaurante":"FS SALVADOR - AV ACM","resposta":"NÃO"},{"BKN_int":28359.0,"BKN":28359,"REGIONAL":"NE","Restaurante":"FS SALVADOR   AV MANOEL DIAS DA SILVA 1879","resposta":"NÃO"},{"BKN_int":21424.0,"BKN":21424,"REGIONAL":"MINAS BAHIA","Restaurante":"SHOP DO VALE DO ACO","resposta":"NÃO"},{"BKN_int":15512.0,"BKN":15512,"REGIONAL":"MINAS BAHIA","Restaurante":"SHOP BARRA SALVADOR","resposta":"NÃO"},{"BKN_int":26806.0,"BKN":26806,"REGIONAL":"SUL","Restaurante":"JOCKEY PLAZA SHOP","resposta":"NÃO"},{"BKN_int":23699.0,"BKN":23699,"REGIONAL":"SUL","Restaurante":"COLOMBO PARK SHOP","resposta":"NÃO"},{"BKN_int":22511.0,"BKN":22511,"REGIONAL":"SUL","Restaurante":"FS CURITIBA - AV FLORIANO PEIXOTO 5952","resposta":"NÃO"},{"BKN_int":32610.0,"BKN":32610,"REGIONAL":"SUL","Restaurante":"FC - CATUAI CASCAVEL - AV BRASIL 3561","resposta":"NÃO"},{"BKN_int":18625.0,"BKN":18625,"REGIONAL":"SUL","Restaurante":"BOURBON SHOP WALLIG","resposta":"NÃO"},{"BKN_int":21553.0,"BKN":21553,"REGIONAL":"SUL","Restaurante":"BKN 21553","resposta":"NÃO"},{"BKN_int":19618.0,"BKN":19618,"REGIONAL":"SUL","Restaurante":"SHOP GRAVATAI","resposta":"NÃO"},{"BKN_int":17233.0,"BKN":17233,"REGIONAL":"SUL","Restaurante":"BKN 17233","resposta":"NÃO"},{"BKN_int":20410.0,"BKN":20410,"REGIONAL":"SUL","Restaurante":"WALMART BIG TORRES","resposta":"NÃO"},{"BKN_int":21791.0,"BKN":21791,"REGIONAL":"SUL","Restaurante":"SHOP CIDADE CURITIBA","resposta":"NÃO"},{"BKN_int":20226.0,"BKN":20226,"REGIONAL":"BK É FOGO NORTE","Restaurante":"MAXXI ATACADO VILA GUILHERME","resposta":"NÃO"},{"BKN_int":23462.0,"BKN":23462,"REGIONAL":"BK É FOGO NORTE","Restaurante":"CARREFOUR VILLA LOBOS","resposta":"NÃO"},{"BKN_int":24357.0,"BKN":24357,"REGIONAL":"BK É FOGO NORTE","Restaurante":"WALMART PACAEMBU","resposta":"NÃO"},{"BKN_int":16626.0,"BKN":16626,"REGIONAL":"SUL","Restaurante":"SHOP PALLADIUM CURITIBA","resposta":"NÃO"},{"BKN_int":16852.0,"BKN":16852,"REGIONAL":"SUL","Restaurante":"SHOP SAO JOSE DOS PINHAIS","resposta":"NÃO"},{"BKN_int":30086.0,"BKN":30086,"REGIONAL":"SUL","Restaurante":"FS PONTA GROSSA - BALD TAQUES 1530","resposta":"NÃO"},{"BKN_int":25857.0,"BKN":25857,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"FS SERTAOZINHO - AV ANTONIO PASCHOAL 1447","resposta":"NÃO"},{"BKN_int":23813.0,"BKN":23813,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"BKN 23813","resposta":"NÃO"},{"BKN_int":18546.0,"BKN":18546,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"ILS FRANCA SHOP","resposta":"NÃO"},{"BKN_int":19626.0,"BKN":19626,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"FS FRANCA - AV ISMAEL ALONSO 2161","resposta":"NÃO"},{"BKN_int":19516.0,"BKN":19516,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"SHOP IGUATEMI RIBEIRAO PRETO","resposta":"NÃO"},{"BKN_int":18452.0,"BKN":18452,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"SHOP SANTA URSULA","resposta":"NÃO"},{"BKN_int":18870.0,"BKN":18870,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"FS RIB PRETO - AV PORTUGAL 810","resposta":"NÃO"},{"BKN_int":30074.0,"BKN":30074,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"FS RIBEIRAO PRETO  AV CAPITAO SALOMAO 2360","resposta":"NÃO"},{"BKN_int":18815.0,"BKN":18815,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"RIBEIRAO SHOP","resposta":"NÃO"},{"BKN_int":21533.0,"BKN":21533,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"FS ARARAQUARA - AV FRANCISCO SALLES 470","resposta":"NÃO"},{"BKN_int":23180.0,"BKN":23180,"REGIONAL":"RJ","Restaurante":"SHOP BANGU II","resposta":"NÃO"},{"BKN_int":21699.0,"BKN":21699,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"FS SAO CARLOS - PASSEIO SAO CARLOS","resposta":"NÃO"},{"BKN_int":19173.0,"BKN":19173,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"FS RIO CLARO - JARDIM CLARET","resposta":"NÃO"},{"BKN_int":19103.0,"BKN":19103,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"SHOP CENTER RIO CLARO","resposta":"NÃO"},{"BKN_int":19530.0,"BKN":19530,"REGIONAL":"RJ","Restaurante":"SHOP METROPOLITANO BARRA","resposta":"NÃO"},{"BKN_int":19514.0,"BKN":19514,"REGIONAL":"RJ","Restaurante":"FS RJ - AV DAS AMERICAS RECREIO","resposta":"NÃO"},{"BKN_int":19604.0,"BKN":19604,"REGIONAL":"RJ","Restaurante":"ILS BOULEVARD SHOP CAMPOS","resposta":"NÃO"},{"BKN_int":26812.0,"BKN":26812,"REGIONAL":"RJ","Restaurante":"FS RJ - R FRANCISCO REAL 924","resposta":"NÃO"},{"BKN_int":31066.0,"BKN":31066,"REGIONAL":"RJ","Restaurante":"FS - RJ ESTRADA DA CACHAMORRA,200","resposta":"NÃO"},{"BKN_int":1799.0,"BKN":1799,"REGIONAL":"RJ","Restaurante":"BKN 1799","resposta":"NÃO"},{"BKN_int":17969.0,"BKN":17969,"REGIONAL":"RJ","Restaurante":"SHOP BANGU","resposta":"NÃO"},{"BKN_int":26796.0,"BKN":26796,"REGIONAL":"RJ","Restaurante":"FS RJ - ESTRADA DO MONTEIRO 318","resposta":"NÃO"},{"BKN_int":18416.0,"BKN":18416,"REGIONAL":"RJ","Restaurante":"WEST SHOP","resposta":"NÃO"},{"BKN_int":18742.0,"BKN":18742,"REGIONAL":"RJ","Restaurante":"SHOP PATIOMIX COSTA VERDE","resposta":"NÃO"},{"BKN_int":19863.0,"BKN":19863,"REGIONAL":"RJ","Restaurante":"EXTRA SANTA CRUZ","resposta":"NÃO"},{"BKN_int":27457.0,"BKN":27457,"REGIONAL":"RJ","Restaurante":"FS RJ - AV DAS AMERICAS RECREIO II","resposta":"NÃO"},{"BKN_int":20040.0,"BKN":20040,"REGIONAL":"RJ","Restaurante":"AMERICAS SHOP","resposta":"NÃO"},{"BKN_int":26163.0,"BKN":26163,"REGIONAL":"RJ","Restaurante":"VIA PARQUE SHOP RJ II","resposta":"NÃO"},{"BKN_int":18419.0,"BKN":18419,"REGIONAL":"RJ","Restaurante":"RECREIO SHOP","resposta":"NÃO"},{"BKN_int":19423.0,"BKN":19423,"REGIONAL":"RJ","Restaurante":"SHOP AVENIDA 28","resposta":"NÃO"},{"BKN_int":30087.0,"BKN":30087,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"FS LIMEIRA DR LAURO CORREA SILVA 4643","resposta":"NÃO"},{"BKN_int":18816.0,"BKN":18816,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"SHOP VIC SANTA BARBARA","resposta":"NÃO"},{"BKN_int":19617.0,"BKN":19617,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"FS AMERICANA - R JULIO PRESTES","resposta":"NÃO"},{"BKN_int":24363.0,"BKN":24363,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"FS AMERICANA - AV N SRA DE FATIMA 231","resposta":"NÃO"},{"BKN_int":25450.0,"BKN":25450,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"FS HORTOLANDIA - AV SANTANA 970","resposta":"NÃO"},{"BKN_int":29078.0,"BKN":29078,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"FS MOGI MIRIM   R PADRE ROQUE 656","resposta":"NÃO"},{"BKN_int":23177.0,"BKN":23177,"REGIONAL":"SP CENTRO LITORAL","Restaurante":"SHOP PATIO HIGIENOPOLIS","resposta":"NÃO"},{"BKN_int":20889.0,"BKN":20889,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"SHOP SERRA SUL POUSO ALEGRE","resposta":"NÃO"},{"BKN_int":21342.0,"BKN":21342,"REGIONAL":"SP CENTRO LITORAL","Restaurante":"EXTRA ANHANGUERA","resposta":"NÃO"},{"BKN_int":21589.0,"BKN":21589,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"VIA CAFE GARDEN SHOP","resposta":"NÃO"},{"BKN_int":31775.0,"BKN":31775,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"FS ITAJUBA - AV CESARIO ALVIM 115","resposta":"NÃO"},{"BKN_int":20710.0,"BKN":20710,"REGIONAL":"SP CENTRO LITORAL","Restaurante":"TIETE MALL","resposta":"NÃO"},{"BKN_int":22913.0,"BKN":22913,"REGIONAL":"SP CENTRO LITORAL","Restaurante":"ILR SP - R BARAO DE ITAPETININGA 99","resposta":"NÃO"},{"BKN_int":18334.0,"BKN":18334,"REGIONAL":"SP CENTRO LITORAL","Restaurante":"FS SP - RADIAL LESTE 1884","resposta":"NÃO"},{"BKN_int":26432.0,"BKN":26432,"REGIONAL":"SP SUL","Restaurante":"FS SP - AV SEN TEOTONIO VILELA","resposta":"NÃO"},{"BKN_int":15172.0,"BKN":15172,"REGIONAL":"SP SUL","Restaurante":"SHOP IBIRAPUERA","resposta":"NÃO"},{"BKN_int":27464.0,"BKN":27464,"REGIONAL":"SP SUL","Restaurante":"BKN 27464","resposta":"NÃO"},{"BKN_int":26426.0,"BKN":26426,"REGIONAL":"SP SUL","Restaurante":"SHOP D&D","resposta":"NÃO"},{"BKN_int":15885.0,"BKN":15885,"REGIONAL":"SP SUL","Restaurante":"SHOP ELDORADO","resposta":"NÃO"},{"BKN_int":19666.0,"BKN":19666,"REGIONAL":"SP SUL","Restaurante":"SHOP VILA OLIMPIA","resposta":"NÃO"},{"BKN_int":30470.0,"BKN":30470,"REGIONAL":"SP SUL","Restaurante":"FS ESTR. DE ITAPECERICA 1400","resposta":"NÃO"},{"BKN_int":22525.0,"BKN":22525,"REGIONAL":"SP SUL","Restaurante":"SHOP SP MARKET II","resposta":"NÃO"},{"BKN_int":22515.0,"BKN":22515,"REGIONAL":"SP SUL","Restaurante":"FS SP - AV ELISEU DE ALMEIDA 3440","resposta":"NÃO"},{"BKN_int":15791.0,"BKN":15791,"REGIONAL":"SP CENTRO LITORAL","Restaurante":"PRAIA MAR SHOP SANTOS","resposta":"NÃO"},{"BKN_int":25437.0,"BKN":25437,"REGIONAL":"SP SUL","Restaurante":"FS SP - AV WASHINGTON LUIS 1171","resposta":"NÃO"},{"BKN_int":27476.0,"BKN":27476,"REGIONAL":"SP CENTRO LITORAL","Restaurante":"FS GUARUJA - AV DOM PEDRO","resposta":"NÃO"},{"BKN_int":32476.0,"BKN":32476,"REGIONAL":"SP CENTRO LITORAL","Restaurante":"FS - SANTOS AV CONSELHEIRO NEBIAS","resposta":"NÃO"},{"BKN_int":16431.0,"BKN":16431,"REGIONAL":"SP CENTRO LITORAL","Restaurante":"SHOP LA PLAGE","resposta":"NÃO"},{"BKN_int":22698.0,"BKN":22698,"REGIONAL":"SP CENTRO LITORAL","Restaurante":"FS PRAIA GRANDE - PRES KENNEDY 1405","resposta":"NÃO"},{"BKN_int":18453.0,"BKN":18453,"REGIONAL":"SP SUL","Restaurante":"SHOP ITAPEVI CENTER","resposta":"NÃO"},{"BKN_int":19521.0,"BKN":19521,"REGIONAL":"SP SUL","Restaurante":"ILS SHOP INTERLAGOS II","resposta":"NÃO"},{"BKN_int":17673.0,"BKN":17673,"REGIONAL":"SP SUL","Restaurante":"SHOP TABOAO","resposta":"NÃO"},{"BKN_int":18843.0,"BKN":18843,"REGIONAL":"SP SUL","Restaurante":"CARREFOUR RAPOSO","resposta":"NÃO"},{"BKN_int":25432.0,"BKN":25432,"REGIONAL":"SP CENTRO LITORAL","Restaurante":"FS GUARUJA - AV PUGLISI 131","resposta":"NÃO"},{"BKN_int":26815.0,"BKN":26815,"REGIONAL":"SP CENTRO LITORAL","Restaurante":"FS SANTOS - SANTA CASA","resposta":"NÃO"},{"BKN_int":33159.0,"BKN":33159,"REGIONAL":"SP SUL","Restaurante":"FS SAO PAULO - AV COMENDADOR SANTANNA 693 (DIA)","resposta":"NÃO"},{"BKN_int":24393.0,"BKN":24393,"REGIONAL":"RJ","Restaurante":"AEROPORTO GALEAO","resposta":"NÃO"},{"BKN_int":25852.0,"BKN":25852,"REGIONAL":"SP SUL","Restaurante":"FS SP - AV GIOVANNI GRONCHI 6600","resposta":"NÃO"},{"BKN_int":26827.0,"BKN":26827,"REGIONAL":"SP SUL","Restaurante":"FS CARAPICUIBA - AV INOCENCIO SERAFICO","resposta":"NÃO"},{"BKN_int":19146.0,"BKN":19146,"REGIONAL":"SP SUL","Restaurante":"CONTINENTAL SHOP SP","resposta":"NÃO"},{"BKN_int":25848.0,"BKN":25848,"REGIONAL":"SP CENTRO LITORAL","Restaurante":"PATIO METRO SAO BENTO","resposta":"NÃO"},{"BKN_int":16666.0,"BKN":16666,"REGIONAL":"SP CENTRO LITORAL","Restaurante":"LITORAL PLAZA SHOP","resposta":"NÃO"},{"BKN_int":28085.0,"BKN":28085,"REGIONAL":"SP SUL","Restaurante":"JANDIRA PLAZA SHOP","resposta":"NÃO"},{"BKN_int":20047.0,"BKN":20047,"REGIONAL":"SUL","Restaurante":"FS CURITIBA - LINHA VERDE","resposta":"NÃO"},{"BKN_int":26845.0,"BKN":26845,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"SHOP PARKCITY","resposta":"NÃO"},{"BKN_int":21524.0,"BKN":21524,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"SHOP HORTOLANDIA","resposta":"NÃO"},{"BKN_int":23183.0,"BKN":23183,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"BEBEDOURO SHOP","resposta":"NÃO"},{"BKN_int":25442.0,"BKN":25442,"REGIONAL":"SP CENTRO LITORAL","Restaurante":"ILR SP - RUA XV DE NOVEMBRO 26","resposta":"NÃO"},{"BKN_int":20708.0,"BKN":20708,"REGIONAL":"SP CENTRO LITORAL","Restaurante":"SHOP PARQUE BALNEARIO","resposta":"NÃO"},{"BKN_int":25044.0,"BKN":25044,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"EXTRA NOVA ABOLICAO","resposta":"NÃO"},{"BKN_int":24361.0,"BKN":24361,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"FS CAMPINAS - NORTE SUL 1387","resposta":"NÃO"},{"BKN_int":21915.0,"BKN":21915,"REGIONAL":"SP SUL","Restaurante":"ASSAI RAPOSO","resposta":"NÃO"},{"BKN_int":17498.0,"BKN":17498,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"FS CAMPINAS - AV BRASIL 761","resposta":"NÃO"},{"BKN_int":18269.0,"BKN":18269,"REGIONAL":"SP SUL","Restaurante":"SHOP RAPOSO","resposta":"NÃO"},{"BKN_int":24741.0,"BKN":24741,"REGIONAL":"SUL","Restaurante":"FS PELOTAS - AV FERREIRA VIANA","resposta":"NÃO"},{"BKN_int":31062.0,"BKN":31062,"REGIONAL":"SP CENTRO LITORAL","Restaurante":"FS - PG AV MAL MALLET,1450","resposta":"NÃO"},{"BKN_int":26817.0,"BKN":26817,"REGIONAL":"SP CENTRO LITORAL","Restaurante":"FS SAO VICENTE - AV PRES WILSON 344","resposta":"NÃO"},{"BKN_int":18422.0,"BKN":18422,"REGIONAL":"SP SUL","Restaurante":"SHOP GRANJA VIANA","resposta":"NÃO"},{"BKN_int":22580.0,"BKN":22580,"REGIONAL":"SP SUL","Restaurante":"SHOP BUTANTA","resposta":"NÃO"},{"BKN_int":28437.0,"BKN":28437,"REGIONAL":"SUL","Restaurante":"FS SP   AV INTERLAGOS 3650","resposta":"NÃO"},{"BKN_int":17261.0,"BKN":17261,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"SHOP VALE SUL","resposta":"NÃO"},{"BKN_int":19660.0,"BKN":19660,"REGIONAL":"SP SUL","Restaurante":"FS SP - EXTRA JAGUARE","resposta":"NÃO"},{"BKN_int":19865.0,"BKN":19865,"REGIONAL":"SP SUL","Restaurante":"EXTRA TABOAO DA SERRA","resposta":"NÃO"},{"BKN_int":28345.0,"BKN":28345,"REGIONAL":"SP SUL","Restaurante":"FS SP - PÇA PANAMERICANA","resposta":"NÃO"},{"BKN_int":26434.0,"BKN":26434,"REGIONAL":"SP SUL","Restaurante":"FS SP - AV REBOUCAS 2210","resposta":"NÃO"},{"BKN_int":19523.0,"BKN":19523,"REGIONAL":"SP SUL","Restaurante":"FS SP - VIC ROBERT KENNEDY","resposta":"NÃO"},{"BKN_int":19629.0,"BKN":19629,"REGIONAL":"BK É FOGO LESTE","Restaurante":"FS SP - AV RIO DAS PEDRAS 1320","resposta":"NÃO"},{"BKN_int":18942.0,"BKN":18942,"REGIONAL":"BK É FOGO LESTE","Restaurante":"FS SP - AV JACU PESSEGO 8210","resposta":"NÃO"},{"BKN_int":32177.0,"BKN":32177,"REGIONAL":"BK É FOGO LESTE","Restaurante":"FS SAO PAULO - AV NORDESTINA 3019","resposta":"NÃO"},{"BKN_int":18417.0,"BKN":18417,"REGIONAL":"BK É FOGO LESTE","Restaurante":"ILS SHOP CENTER PENHA SP","resposta":"NÃO"},{"BKN_int":21525.0,"BKN":21525,"REGIONAL":"BK É FOGO LESTE","Restaurante":"SHOP SUZANO","resposta":"NÃO"},{"BKN_int":26841.0,"BKN":26841,"REGIONAL":"BK É FOGO LESTE","Restaurante":"FS SP - AV ARICANDUVA 4516","resposta":"NÃO"},{"BKN_int":18820.0,"BKN":18820,"REGIONAL":"BK É FOGO LESTE","Restaurante":"CARREFOUR PESSEGO","resposta":"NÃO"},{"BKN_int":28342.0,"BKN":28342,"REGIONAL":"BK É FOGO LESTE","Restaurante":"FS SP   AV JACU PESSEGO 1495","resposta":"NÃO"},{"BKN_int":19654.0,"BKN":19654,"REGIONAL":"BK É FOGO LESTE","Restaurante":"CARREFOUR ANCHIETA","resposta":"NÃO"},{"BKN_int":18740.0,"BKN":18740,"REGIONAL":"BK É FOGO LESTE","Restaurante":"PARK SHOP SAO CAETANO","resposta":"NÃO"},{"BKN_int":20624.0,"BKN":20624,"REGIONAL":"BK É FOGO LESTE","Restaurante":"ASSAI MOOCA","resposta":"NÃO"},{"BKN_int":19630.0,"BKN":19630,"REGIONAL":"BK É FOGO LESTE","Restaurante":"FS SCS - EST DAS LAGRIMAS 1986","resposta":"NÃO"},{"BKN_int":15494.0,"BKN":15494,"REGIONAL":"BK É FOGO LESTE","Restaurante":"SHOP GRAND PLAZA","resposta":"NÃO"},{"BKN_int":20996.0,"BKN":20996,"REGIONAL":"BK É FOGO LESTE","Restaurante":"MAUA PLAZA SHOP II","resposta":"NÃO"},{"BKN_int":26437.0,"BKN":26437,"REGIONAL":"BK É FOGO LESTE","Restaurante":"FS SANTO ANDRE - AV DOS ESTADOS 6081","resposta":"NÃO"},{"BKN_int":19589.0,"BKN":19589,"REGIONAL":"BK É FOGO LESTE","Restaurante":"ASSAI SANTO ANDRE","resposta":"NÃO"},{"BKN_int":26168.0,"BKN":26168,"REGIONAL":"BK É FOGO LESTE","Restaurante":"AEROPORTO GRU","resposta":"NÃO"},{"BKN_int":19657.0,"BKN":19657,"REGIONAL":"BK É FOGO LESTE","Restaurante":"CARREFOUR SANTO ANDRE","resposta":"NÃO"},{"BKN_int":19662.0,"BKN":19662,"REGIONAL":"BK É FOGO LESTE","Restaurante":"SHOP ABC","resposta":"NÃO"},{"BKN_int":19854.0,"BKN":19854,"REGIONAL":"BK É FOGO LESTE","Restaurante":"SHOP ANALIA FRANCO","resposta":"NÃO"},{"BKN_int":17780.0,"BKN":17780,"REGIONAL":"BK É FOGO LESTE","Restaurante":"SHOP METRO BOULEVARD TATUAPE","resposta":"NÃO"},{"BKN_int":19102.0,"BKN":19102,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"FS PIRACICABA - AV INDEPENDENCIA 2677","resposta":"NÃO"},{"BKN_int":30075.0,"BKN":30075,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"FS PIRACICABA - AV ME M TEODORA 1077","resposta":"NÃO"},{"BKN_int":18423.0,"BKN":18423,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"SHOP PIRACICABA","resposta":"NÃO"},{"BKN_int":19663.0,"BKN":19663,"REGIONAL":"SP INTERIOR NORTE","Restaurante":"SHOP PIRACICABA II","resposta":"NÃO"},{"BKN_int":23991.0,"BKN":23991,"REGIONAL":"SP CENTRO LITORAL","Restaurante":"JARDIM PAMPLONA","resposta":"NÃO"},{"BKN_int":30664.0,"BKN":30664,"REGIONAL":"SP CENTRO LITORAL","Restaurante":"FS GUARUJA - AV ADEMAR BARROS 2049","resposta":"NÃO"},{"BKN_int":16086.0,"BKN":16086,"REGIONAL":"SP CENTRO LITORAL","Restaurante":"SHOP BRISAMAR SAO VICENTE","resposta":"NÃO"}]
+};
+
+// Lookup sim lojas by regional
+const simByReg = {};
+const naoByReg = {};
+DATA.resumo.forEach(r => {
+  simByReg[r.REGIONAL] = [];
+  naoByReg[r.REGIONAL] = [];
+});
+// Use nao_lojas for NAO
+DATA.nao_lojas.forEach(l => {
+  if (naoByReg[l.REGIONAL]) naoByReg[l.REGIONAL].push(l);
+});
+
+// KPIs
+const totalResp = DATA.resumo.reduce((a,r) => a+r.Respondidas, 0);
+const totalSim = DATA.resumo.reduce((a,r) => a+r.SIM, 0);
+const totalNao = DATA.resumo.reduce((a,r) => a+r.NAO, 0);
+const pctNao = ((totalNao/totalResp)*100).toFixed(1);
+
+document.getElementById('badge-total').textContent = `${totalResp} lojas`;
+document.getElementById('kpi-total').textContent = totalResp;
+document.getElementById('kpi-sim').textContent = totalSim;
+document.getElementById('kpi-sim-sub').textContent = `${((totalSim/totalResp)*100).toFixed(1)}% do total`;
+document.getElementById('kpi-nao').textContent = totalNao;
+document.getElementById('kpi-nao-sub').textContent = `${pctNao}% do total`;
+document.getElementById('kpi-pct').textContent = `${pctNao}%`;
+
+// Sort resumo by %NAO desc
+const sortedResumo = [...DATA.resumo].sort((a,b) => b['%NAO'] - a['%NAO']);
+
+// Render regional cards
+function getBadgeClass(pctSim) {
+  if (pctSim >= 70) return 'badge-good';
+  if (pctSim >= 45) return 'badge-warn';
+  return 'badge-bad';
+}
+
+let expandedCard = null;
+let currentFilter = 'todos';
+let activeDetailTabs = {};
+
+function renderCards(filter) {
+  const grid = document.getElementById('reg-grid');
+  let data = sortedResumo;
+  if (filter === 'problema') data = sortedResumo.filter(r => r['%NAO'] > 50);
+  if (filter === 'ok') data = sortedResumo.filter(r => r['%SIM'] >= 50);
+  
+  grid.innerHTML = '';
+  data.forEach(r => {
+    const badgeCls = getBadgeClass(r['%SIM']);
+    const pctSim = r['%SIM'];
+    const naoLojas = naoByReg[r.REGIONAL] || [];
+    
+    const card = document.createElement('div');
+    card.className = 'reg-card';
+    card.dataset.regional = r.REGIONAL;
+    card.innerHTML = `
+      <div class="reg-header" onclick="toggleCard(this.parentElement)">
+        <div>
+          <div class="reg-name">${r.REGIONAL}</div>
+          <div class="reg-meta">${r.Respondidas} respondidas &bull; ${r.NAO} com problema</div>
+        </div>
+        <div class="reg-pct-badge ${badgeCls}">${r['%NAO'].toFixed(0)}% ✗</div>
+      </div>
+      <div class="reg-bar-wrap">
+        <div class="reg-bar-track">
+          <div class="reg-bar-fill" style="width:${pctSim}%"></div>
+        </div>
+        <div class="reg-bar-labels">
+          <span class="lbl-sim">✓ ${r.SIM} SIM (${r['%SIM']}%)</span>
+          <span class="lbl-nao">✗ ${r.NAO} NÃO (${r['%NAO']}%)</span>
+        </div>
+      </div>
+      <div class="reg-detail">
+        <div class="detail-tabs">
+          <button class="detail-tab active-nao" onclick="switchDetailTab(this,'nao','${r.REGIONAL}')">✗ NÃO (${r.NAO})</button>
+          <button class="detail-tab" onclick="switchDetailTab(this,'sim','${r.REGIONAL}')">✓ SIM (${r.SIM})</button>
+        </div>
+        <div class="detail-list" id="detail-${r.REGIONAL.replace(/[^a-z0-9]/gi,'_')}">
+          ${naoLojas.map(l => `
+            <div class="detail-item">
+              <div class="dot dot-nao"></div>
+              <div class="detail-bkn">${l.BKN}</div>
+              <div class="detail-nome">${l.Restaurante || 'BKN '+l.BKN}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function toggleCard(card) {
+  const wasExpanded = card.classList.contains('expanded');
+  document.querySelectorAll('.reg-card.expanded').forEach(c => c.classList.remove('expanded'));
+  if (!wasExpanded) card.classList.add('expanded');
+}
+
+function switchDetailTab(btn, type, regional) {
+  const card = btn.closest('.reg-card');
+  const tabs = card.querySelectorAll('.detail-tab');
+  tabs.forEach(t => { t.classList.remove('active-nao','active-sim'); });
+  btn.classList.add(type === 'nao' ? 'active-nao' : 'active-sim');
+  
+  const key = regional.replace(/[^a-z0-9]/gi,'_');
+  const list = document.getElementById('detail-'+key);
+  const lojas = type === 'nao' ? (naoByReg[regional]||[]) : (simByReg[regional]||[]);
+  // For SIM we just show count since we didn't index SIM by regional easily
+  list.innerHTML = lojas.map(l => `
+    <div class="detail-item">
+      <div class="dot ${type==='nao'?'dot-nao':'dot-sim'}"></div>
+      <div class="detail-bkn">${l.BKN}</div>
+      <div class="detail-nome">${l.Restaurante || 'BKN '+l.BKN}</div>
+    </div>
+  `).join('') || `<div style="padding:16px 18px;font-size:12px;color:var(--muted);">Dados detalhados não disponíveis</div>`;
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCards(f);
+}
+
+// Render table
+function renderTable() {
+  const tbody = document.getElementById('resumo-tbody');
+  sortedResumo.forEach(r => {
+    const tr = document.createElement('tr');
+    const barPct = r['%SIM'];
+    tr.innerHTML = `
+      <td style="font-weight:600">${r.REGIONAL}</td>
+      <td class="right">${r.Respondidas}</td>
+      <td class="right td-sim">${r.SIM}</td>
+      <td class="right td-nao">${r.NAO}</td>
+      <td class="right td-pct" style="color:var(--sim)">${r['%SIM']}%</td>
+      <td class="right td-pct" style="color:var(--nao)">${r['%NAO']}%</td>
+      <td><div class="td-bar"><div class="td-bar-fill" style="width:${barPct}%"></div></div></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  // Totals row
+  const tr = document.createElement('tr');
+  tr.style.borderTop = '2px solid var(--border)';
+  tr.style.fontWeight = '700';
+  tr.innerHTML = `
+    <td>TOTAL</td>
+    <td class="right">${totalResp}</td>
+    <td class="right td-sim">${totalSim}</td>
+    <td class="right td-nao">${totalNao}</td>
+    <td class="right" style="color:var(--sim)">${((totalSim/totalResp)*100).toFixed(1)}%</td>
+    <td class="right" style="color:var(--nao)">${pctNao}%</td>
+    <td><div class="td-bar"><div class="td-bar-fill" style="width:${((totalSim/totalResp)*100).toFixed(1)}%"></div></div></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+// Render NAO full list
+let naoRegFilter = null;
+function renderNaoFull(search='', regFilter=null) {
+  const grid = document.getElementById('nao-full-grid');
+  let data = DATA.nao_lojas;
+  if (regFilter) data = data.filter(l => l.REGIONAL === regFilter);
+  if (search) {
+    const q = search.toLowerCase();
+    data = data.filter(l => 
+      (l.Restaurante||'').toLowerCase().includes(q) ||
+      String(l.BKN).includes(q) ||
+      l.REGIONAL.toLowerCase().includes(q)
+    );
+  }
+  grid.innerHTML = data.map(l => `
+    <div class="nao-item">
+      <div class="nao-item-nome">${l.Restaurante || 'BKN '+l.BKN}</div>
+      <div class="nao-item-meta">BKN ${l.BKN} &bull; ${l.REGIONAL}</div>
+    </div>
+  `).join('');
+  document.getElementById('nao-count').textContent = `${data.length} lojas exibidas`;
+}
+
+function renderRegFilterNao() {
+  const bar = document.getElementById('filter-regional-nao');
+  const regs = [...new Set(DATA.nao_lojas.map(l => l.REGIONAL))].sort();
+  bar.innerHTML = `<button class="filter-btn active" onclick="setNaoReg(null,this)">Todas</button>`;
+  regs.forEach(reg => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn';
+    btn.textContent = reg;
+    btn.onclick = function() { setNaoReg(reg, this); };
+    bar.appendChild(btn);
+  });
+}
+
+function setNaoReg(reg, btn) {
+  naoRegFilter = reg;
+  document.querySelectorAll('#filter-regional-nao .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderNaoFull(document.getElementById('search-nao').value, reg);
+}
+
+function filterNao(val) {
+  renderNaoFull(val, naoRegFilter);
+}
+
+// Main tab switch
+function switchTab(tab) {
+  document.querySelectorAll('.main-tab').forEach((t,i) => {
+    const tabs = ['regionais','tabela','problemas'];
+    t.classList.toggle('active', tabs[i] === tab);
+  });
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-'+tab).classList.add('active');
+}
+
+// INIT
+renderCards('todos');
+renderTable();
+renderNaoFull();
+renderRegFilterNao();
+</script>
+</body>
+</html>
